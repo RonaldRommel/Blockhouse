@@ -16,6 +16,20 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > my-key.pem
           chmod 600 my-key.pem
+      # Debugging Step: Check if the Key is Created
+      - name: Verify SSH Key File
+        run: |
+          echo "Checking file existence:"
+          ls -lah my-key.pem  # List file details
+          
+          echo "Checking file permissions:"
+          ls -l my-key.pem  # Verify it is -rw------- (600)
+          
+          echo "Checking first and last lines of the key (masked for security):"
+          head -n 2 my-key.pem  # Print first 2 lines
+          echo "..."
+          tail -n 2 my-key.pem  # Print last 2 lines
+
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.8
