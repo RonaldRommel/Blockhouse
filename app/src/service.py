@@ -36,7 +36,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_order)
     return db_order
-    
+     
 
 @app.get("/orders", response_model=List[OrderResponse], summary="Get all orders", tags=["Orders"])
 def get_orders(db: Session = Depends(get_db)):

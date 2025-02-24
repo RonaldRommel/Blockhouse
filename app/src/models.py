@@ -29,7 +29,7 @@ class OrderCreate(BaseModel):
         if value <= 0:
             raise ValueError('Quantity must be greater than 0')
         return value
-
+ 
     @field_validator("symbol")
     def validate_ticker_symbol(cls, symbol):
         if not re.match(r"^[A-Z]{1,5}$", symbol):
@@ -41,3 +41,4 @@ class OrderResponse(OrderCreate):
 
     class Config:
         from_attributes = True
+ 
