@@ -23,7 +23,7 @@ jobs:
 
       # Run Unit Tests inside the container
       - name: Run Unit Tests with Pytest
-        run: docker run --rm blockhouse-test pytest tests/
+        run: docker run --rm -p 80:8000 blockhouse-test pytest tests/
 
   # ✅ JOB 2: Build and Deploy on Merge to Main
   deploy:
