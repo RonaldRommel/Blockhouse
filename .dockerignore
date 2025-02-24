@@ -1,0 +1,23 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+.env/
+Dockerfile
+docker-compose.yml
+README.md
+*.md
+*.env
+*.git
+.git/
+*.db  # Avoid including any SQLite database file accidentally in the image
+*.log
+*.bak
+*.swp
+tests/
+*.pytest_cache
+.vscode/
+.idea/
