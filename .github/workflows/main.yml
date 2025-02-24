@@ -1,42 +1,55 @@
-name: Deploy to AWS EC2
+name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main ]
+  pull_request:   # Run tests on PRs
+    branches:
+      - main
+  push:           # Deploy on merge to main
+    branches:
+      - main
 
 jobs:
-  deploy:
+  # ✅ JOB 1: Run Tests on Pull Requests
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Build the Docker image for testing
+      - name: Build Docker Image
+        run: docker build -t blockhouse-test .
+
+      # Run Unit Tests inside the container
+      - name: Run Unit Tests with Pytest
+        run: docker run --rm blockhouse-test pytest tests/
+
+  # ✅ JOB 2: Build and Deploy on Merge to Main
+  deploy:
+    needs: test  # Ensures deployment only runs if tests pass
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Build the Docker Image for Deployment
+      - name: Build Production Docker Image
+        run: docker build -t blockhouse:latest .
+
       - name: Create SSH Key File
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > my-key.pem
           chmod 600 my-key.pem
-      # Debugging Step: Check if the Key is Created
-      - name: Verify SSH Key File
-        run: |
-          echo "Checking file existence:"
-          ls -lah my-key.pem  # List file details
-          
-          echo "Checking file permissions:"
-          ls -l my-key.pem  # Verify it is -rw------- (600)
-          
-          echo "Checking first and last lines of the key (masked for security):"
-          head -n 2 my-key.pem  # Print first 2 lines
-          echo "..."
-          tail -n 2 my-key.pem  # Print last 2 lines
 
-            # Test SSH Connection to EC2
+      # Test SSH Connection to EC2
       - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no -i my-key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo 'SSH Connection Successful!'"
 
-
-
+      # Deploy to EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -45,7 +58,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}       
           script: |
             cd /home/ubuntu/blockhouse || { echo "Deployment directory not found"; exit 1; }
-
             if [ -d ".git" ]; then
               echo "Repository exists, pulling latest changes..."
               git pull
@@ -53,7 +65,6 @@ jobs:
               echo "Cloning repository..."
               git clone https://github.com/RonaldRommel/Blockhouse.git .
             fi
-
             docker build -t blockhouse .
             docker stop blockhouse || true
             docker rm blockhouse || true
