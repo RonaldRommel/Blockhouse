@@ -57,4 +57,4 @@ jobs:
             docker build -t blockhouse .
             docker stop blockhouse || true
             docker rm blockhouse || true
-            docker run -d -v ./data:/code/data -p 8000:8000 --name blockhouse blockhouse:latest
+            docker run -d -v ./data:/code/data -p 80:8000 --name blockhouse blockhouse:latest
