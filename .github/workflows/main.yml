@@ -1,0 +1,40 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Create SSH Key File
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > my-key.pem
+          chmod 600 my-key.pem
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}         
+          username: ${{ secrets.EC2_USER }}     
+          key: ${{ secrets.EC2_SSH_KEY }}       
+          script: |
+            cd /home/ubuntu/blockhouse || { echo "Deployment directory not found"; exit 1; }
+
+            if [ -d ".git" ]; then
+              echo "Repository exists, pulling latest changes..."
+              git pull
+            else
+              echo "Cloning repository..."
+              git clone https://github.com/RonaldRommel/Blockhouse.git .
+            fi
+
+            docker build -t blockhouse .
+            docker stop blockhouse || true
+            docker rm blockhouse || true
+            docker run -d -v ./data:/code/data -p 8000:8000 --name blockhouse blockhouse:latest
